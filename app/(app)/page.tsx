@@ -1,0 +1,69 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { DailyTaskCard } from '@/components/daily-task-card';
+import { StreakDisplay } from '@/components/streak-display';
+import { getOrCreateTodayTaskAction } from '@/app/actions/tasks';
+
+export default function HomePage() {
+  const [dailyTask, setDailyTask] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTask = async () => {
+      try {
+        setLoading(true);
+        const result = await getOrCreateTodayTaskAction();
+        if (result.success) {
+          setDailyTask(result.data);
+          setError(null);
+        } else {
+          setError(result.error || 'Failed to load task');
+          toast.error(result.error || 'Failed to load task');
+        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+        setError(errorMsg);
+        toast.error(errorMsg);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTask();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <div className="rounded-lg border bg-card p-8 text-center">
+          <p className="text-muted-foreground">Loading today&apos;s task...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !dailyTask) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <div className="rounded-lg border border-destructive bg-card p-8 text-center">
+          <p className="text-destructive">{error}</p>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Please create a goal and plan first to get started.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="space-y-6">
+        <StreakDisplay />
+        {dailyTask && <DailyTaskCard task={dailyTask} onTaskUpdate={() => window.location.reload()} />}
+      </div>
+    </div>
+  );
+}
