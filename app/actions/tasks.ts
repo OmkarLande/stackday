@@ -143,3 +143,32 @@ export async function checkPrimaryTaskCompletedAction(date: Date | string) {
     return { success: false, error: "Failed to check status" };
   }
 }
+
+export async function manualTaskAction(
+  taskId: string,
+  status: TaskStatus
+) {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, error: "Not authenticated" };
+
+    const task = await prisma.dailyTask.findUnique({
+      where: { id: taskId },
+    });
+
+    if (!task || task.user_id !== session.userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const updated = await prisma.dailyTask.update({
+      where: { id: taskId },
+      data: { status },
+      include: { plan: { include: { goal: true } } },
+    });
+
+    return { success: true, data: updated };
+  } catch (error) {
+    console.error("Manual task action failed:", error);
+    return { success: false, error: "Failed to update task" };
+  }
+}

@@ -19,6 +19,7 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | ''>('');
+  const [isOptional, setIsOptional] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
       setDescription(plan.description || '');
       setEstimatedMinutes(plan.estimated_minutes || '');
       setEstimatedMinutes(plan.estimated_minutes || '');
+      setIsOptional(plan.is_optional || false);
     }
   }, [plan]);
 
@@ -39,6 +41,7 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
         title,
         description,
         estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
+        is_optional: isOptional,
       });
 
       if (result.success) {
@@ -85,6 +88,30 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
               onChange={(e) => setEstimatedMinutes(e.target.value ? Number(e.target.value) : '')}
               disabled={isLoading}
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Task Priority</label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={!isOptional ? 'default' : 'outline'}
+                onClick={() => setIsOptional(false)}
+                className="flex-1"
+                disabled={isLoading}
+              >
+                🔥 Main Task
+              </Button>
+              <Button
+                type="button"
+                variant={isOptional ? 'default' : 'outline'}
+                onClick={() => setIsOptional(true)}
+                className="flex-1"
+                disabled={isLoading}
+              >
+                ⚡ Bonus Task
+              </Button>
+            </div>
           </div>
 
           <div className="space-y-2">

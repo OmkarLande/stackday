@@ -63,6 +63,7 @@ export async function importPlansFromCSVAction(
             title: row.title,
             description: row.description,
             estimated_minutes: row.estimated_minutes,
+            is_optional: row.is_optional,
           },
         })
       )

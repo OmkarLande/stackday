@@ -9,7 +9,8 @@ export async function createPlanAction(
   day_number: number,
   title: string,
   description: string,
-  estimated_minutes?: number
+  estimated_minutes?: number,
+  is_optional: boolean = false
 ) {
   try {
     const session = await getSession();
@@ -34,6 +35,7 @@ export async function createPlanAction(
         title,
         description,
         estimated_minutes,
+        is_optional,
       },
     });
 
@@ -88,6 +90,7 @@ export async function updatePlanAction(
     title?: string;
     description?: string;
     estimated_minutes?: number;
+    is_optional?: boolean;
   }
 ) {
   try {

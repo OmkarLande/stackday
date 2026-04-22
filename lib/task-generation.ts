@@ -67,6 +67,7 @@ export async function getOrCreateTodayTask() {
           where: {
             goal_id: goal.id,
             daily_tasks: { none: {} },
+            is_optional: false, // Primary must be a "Main Task"
           },
           orderBy: { day_number: "asc" },
           include: { goal: true },
@@ -80,7 +81,7 @@ export async function getOrCreateTodayTask() {
     }
 
     if (!primaryPlan) {
-      return { success: false, error: "No primary tasks found. All plans might be completed!" };
+      return { success: false, error: "No primary tasks found. All remaining plans might be marked as optional!" };
     }
 
     // 3. Determine Secondary Task (Optional)
@@ -95,12 +96,14 @@ export async function getOrCreateTodayTask() {
     });
 
     for (const goal of otherGoals) {
+      // For secondary, we can pick any unused plan, but we might prefer optional ones if available
       const nextPlan = await prisma.plan.findFirst({
         where: {
           goal_id: goal.id,
           daily_tasks: { none: {} },
         },
         orderBy: [
+          { is_optional: "desc" }, // Prefer optional plans for bonus slot
           { estimated_minutes: "asc" },
           { day_number: "asc" },
         ],
@@ -126,6 +129,7 @@ export async function getOrCreateTodayTask() {
           task_date: today,
           status: TaskStatus.PENDING,
           task_type: TaskType.PRIMARY,
+          is_optional: primaryPlan!.is_optional,
           ai_reason: `Focus on your main goal: "${primaryPlan!.goal.title}"`,
           ai_steps: `1. Carry forward from yesterday if skipped\n2. Work for ${primaryPlan!.estimated_minutes || 45} mins\n3. Mark complete to maintain your streak`,
         },
@@ -143,7 +147,7 @@ export async function getOrCreateTodayTask() {
             task_date: today,
             status: TaskStatus.PENDING,
             task_type: TaskType.SECONDARY,
-            is_optional: true,
+            is_optional: secondaryPlan.is_optional,
             ai_reason: `Quick win for "${secondaryPlan.goal.title}"`,
             ai_steps: `1. Bonus task\n2. Keep it under ${secondaryPlan.estimated_minutes || 20} mins\n3. Boost your productivity`,
           },

@@ -19,6 +19,7 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | ''>('');
+  const [isOptional, setIsOptional] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,7 +44,8 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
         title,
         description,
         description,
-        estimatedMinutes ? Number(estimatedMinutes) : undefined
+        estimatedMinutes ? Number(estimatedMinutes) : undefined,
+        isOptional
       );
 
       if (result.success) {
@@ -52,6 +54,7 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
         setTitle('');
         setDescription('');
         setEstimatedMinutes('');
+        setIsOptional(false);
         onSuccess();
       } else {
         toast.error(result.error || 'Failed to create plan');
@@ -101,6 +104,32 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
                 onChange={(e) => setEstimatedMinutes(e.target.value ? Number(e.target.value) : '')}
                 disabled={isLoading}
               />
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium">
+              Task Priority
+            </label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={!isOptional ? 'default' : 'outline'}
+                onClick={() => setIsOptional(false)}
+                className="flex-1"
+                disabled={isLoading}
+              >
+                🔥 Main Task
+              </Button>
+              <Button
+                type="button"
+                variant={isOptional ? 'default' : 'outline'}
+                onClick={() => setIsOptional(true)}
+                className="flex-1"
+                disabled={isLoading}
+              >
+                ⚡ Bonus Task
+              </Button>
             </div>
           </div>
           

@@ -53,6 +53,7 @@ model Plan {
   title             String
   description       String?
   estimated_minutes Int?
+  is_optional       Boolean  @default(false)
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 

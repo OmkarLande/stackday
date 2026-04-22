@@ -1,12 +1,15 @@
 'use client';
 
-import { Check, Trash2, Pencil } from 'lucide-react';
+import { Check, Trash2, Pencil, RotateCcw, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { deletePlanAction } from '@/app/actions/plans';
+import { manualTaskAction } from '@/app/actions/tasks';
+import { TaskStatus } from '@/lib/Enums/TaskStatus';
 import { useState } from 'react';
 import { EditPlanDialog } from './edit-plan-dialog';
+import { Badge } from '@/components/ui/badge';
 
 export interface ThirtyDayGridProps {
   plans: any[];
@@ -32,6 +35,20 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
     }
   };
 
+  const handleManualAction = async (taskId: string, status: TaskStatus) => {
+    try {
+      const result = await manualTaskAction(taskId, status);
+      if (result.success) {
+        toast.success(`Task marked as ${status}`);
+        onPlansUpdate();
+      } else {
+        toast.error(result.error || 'Action failed');
+      }
+    } catch (error) {
+      toast.error('An error occurred');
+    }
+  };
+
   const plansMap = new Map(plans.map(p => [p.day_number, p]));
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
@@ -39,7 +56,7 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
       {days.map(day => {
         const plan = plansMap.get(day);
-        const isCompleted = plan && plan.daily_tasks && plan.daily_tasks.length > 0;
+        const isCompleted = plan?.daily_tasks?.some(t => t.status === TaskStatus.COMPLETED);
 
         return (
           <Card
@@ -78,21 +95,76 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
 
                 {plan ? (
                   <>
-                    <div>
+                    <div className="space-y-2">
                       <div className="flex items-center gap-1">
                         <p className="text-sm font-semibold line-clamp-1 flex-1">{plan.title}</p>
-                        <span className="text-[10px]" title={plan.task_type === 'secondary' ? 'Bonus Task' : 'Main Task'}>
-                          {plan.task_type === 'secondary' ? '⚡' : '🔥'}
+                        <span className="text-[10px]" title={plan.is_optional ? 'Bonus Task' : 'Main Task'}>
+                          {plan.is_optional ? '⚡' : '🔥'}
                         </span>
                       </div>
-                      {/* description only in 2 lines */}
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{plan.description}</p>
-                      {/* task type */}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {plan.task_type === 'secondary' ? '⚡ Bonus Task' : '🔥 Main Task'}
-                      </p>
-                      {plan.estimated_minutes && (
-                        <p className="text-xs text-muted-foreground mt-1">{plan.estimated_minutes} min</p>
+                      
+                      <p className="text-xs text-muted-foreground line-clamp-2">{plan.description}</p>
+                      
+                      <div className="flex items-center justify-between gap-1 mt-1">
+                        <span className="text-[10px] font-medium text-muted-foreground">
+                          {plan.is_optional ? '⚡ Bonus Task' : '🔥 Main Task'}
+                        </span>
+                        {plan.estimated_minutes && (
+                          <span className="text-[10px] text-muted-foreground">{plan.estimated_minutes} min</span>
+                        )}
+                      </div>
+
+                      {/* Status and Actions */}
+                      {plan.daily_tasks && plan.daily_tasks.length > 0 && (
+                        <div className="pt-2 border-t mt-2 space-y-2">
+                          {(() => {
+                            const latestTask = [...plan.daily_tasks].sort((a, b) => 
+                              new Date(b.task_date).getTime() - new Date(a.task_date).getTime()
+                            )[0];
+                            
+                            return (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <Badge 
+                                    variant={
+                                      latestTask.status === TaskStatus.COMPLETED ? 'default' :
+                                      latestTask.status === TaskStatus.SKIPPED ? 'destructive' :
+                                      'outline'
+                                    }
+                                    className="text-[9px] px-1 py-0 h-4"
+                                  >
+                                    {latestTask.status.toUpperCase()}
+                                  </Badge>
+                                </div>
+                                
+                                <div className="flex gap-1">
+                                  {latestTask.status === TaskStatus.SKIPPED && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="h-6 text-[10px] flex-1 px-1"
+                                      onClick={() => handleManualAction(latestTask.id, TaskStatus.PENDING)}
+                                    >
+                                      <RotateCcw className="h-3 w-3 mr-1" />
+                                      Retry
+                                    </Button>
+                                  )}
+                                  {latestTask.status !== TaskStatus.COMPLETED && (
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="h-6 text-[10px] flex-1 px-1"
+                                      onClick={() => handleManualAction(latestTask.id, TaskStatus.COMPLETED)}
+                                    >
+                                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                                      Done
+                                    </Button>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
                       )}
                     </div>
                   </>

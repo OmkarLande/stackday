@@ -5,6 +5,7 @@ export interface PlanCSVRow {
   title: string;
   description?: string;
   estimated_minutes?: number;
+  is_optional: boolean;
 }
 
 export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
@@ -60,6 +61,11 @@ export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
                           row["Minutes"],
                       )
                     : undefined,
+                is_optional:
+                  row.is_optional === "true" ||
+                  row.is_optional === "1" ||
+                  row["Optional"] === "1" ||
+                  row["Is Optional"] === "true",
               };
             });
 
@@ -77,7 +83,7 @@ export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
           reject(error);
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         reject(new Error(`CSV parsing error: ${error.message}`));
       },
     });
