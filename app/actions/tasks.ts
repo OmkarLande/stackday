@@ -14,8 +14,11 @@ export async function getOrCreateTodayTaskAction() {
       return { success: false, error: "Not authenticated" };
     }
 
-    const task = await getOrCreateTodayTask();
-    return { success: true, data: task };
+    const result = await getOrCreateTodayTask();
+    if (result.success) {
+      return { success: true, data: result.data };
+    }
+    return { success: false, error: result.error };
   } catch (error) {
     const errorMsg =
       error instanceof Error ? error.message : "Failed to fetch today task";

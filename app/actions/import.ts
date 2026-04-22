@@ -2,7 +2,7 @@
 
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { parseCSVFile, PlanCSVRow } from '@/lib/csv-parser';
+import { parseCSV, PlanCSVRow } from '@/lib/csv-parser';
 
 export async function importPlansFromCSVAction(
   goalId: string,
@@ -23,14 +23,11 @@ export async function importPlansFromCSVAction(
       return { success: false, error: 'Goal not found or unauthorized' };
     }
 
-    // Create a File-like object for parsing
-    const blob = new Blob([fileBuffer], { type: 'text/csv' });
-    const file = new File([blob], 'upload.csv', { type: 'text/csv' });
-
     // Parse CSV
+    const csvString = fileBuffer.toString('utf-8');
     let parsedRows: PlanCSVRow[];
     try {
-      parsedRows = await parseCSVFile(file);
+      parsedRows = await parseCSV(csvString);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Invalid CSV format';
       return { success: false, error: errorMsg };
@@ -66,6 +63,7 @@ export async function importPlansFromCSVAction(
             title: row.title,
             description: row.description,
             estimated_minutes: row.estimated_minutes,
+            task_type: row.task_type,
           },
         })
       )
@@ -87,10 +85,8 @@ export async function importPlansFromCSVAction(
 
 export async function validateCSVAction(fileBuffer: Buffer) {
   try {
-    const blob = new Blob([fileBuffer], { type: 'text/csv' });
-    const file = new File([blob], 'upload.csv', { type: 'text/csv' });
-
-    const parsedRows = await parseCSVFile(file);
+    const csvString = fileBuffer.toString('utf-8');
+    const parsedRows = await parseCSV(csvString);
 
     return {
       success: true,

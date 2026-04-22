@@ -6,6 +6,7 @@ import { DailyTaskCard } from '@/components/daily-task-card';
 import { StreakDisplay } from '@/components/streak-display';
 import { getOrCreateTodayTaskAction } from '@/app/actions/tasks';
 import { TaskType } from '@/lib/Enums/TaskType';
+import { TaskStatus } from '@/lib/Enums/TaskStatus';
 
 export default function HomePage() {
   const [dailyTasks, setDailyTasks] = useState<any[]>([]);
@@ -17,10 +18,10 @@ export default function HomePage() {
       try {
         setLoading(true);
         const result = await getOrCreateTodayTaskAction();
-        if (result.success) {
-          setDailyTasks(result.data || []);
+        if (result.success && Array.isArray(result.data)) {
+          setDailyTasks(result.data);
           setError(null);
-        } else {
+        } else if (!result.success) {
           setError(result.error || 'Failed to load task');
           toast.error(result.error || 'Failed to load task');
         }

@@ -93,7 +93,7 @@ export function CSVImportDialog({ goalId, open, onOpenChange, onSuccess }: CSVIm
         <DialogHeader>
           <DialogTitle>Import Plans from CSV</DialogTitle>
           <DialogDescription>
-            Upload a CSV file with your 30-day plan. Required columns: day_number, title. Optional: description, estimated_minutes.
+            Upload a CSV file with your 30-day plan. Required: day_number, title. Optional: description, estimated_minutes, task_type (1 for Main, 2 for Bonus).
           </DialogDescription>
         </DialogHeader>
 
@@ -121,10 +121,10 @@ export function CSVImportDialog({ goalId, open, onOpenChange, onSuccess }: CSVIm
             <div className="rounded-lg bg-muted p-4 text-sm">
               <p className="font-semibold mb-2">CSV Format Example:</p>
               <pre className="text-xs overflow-x-auto">
-{`day_number,title,description,estimated_minutes
-1,Lesson 1,Learn basics,30
-2,Lesson 2,Practice exercises,45
-3,Quiz 1,Review and test,60`}
+{`day_number,title,description,estimated_minutes,task_type
+1,Lesson 1,Learn basics,30,1
+2,Lesson 2,Practice exercises,45,1
+3,Quiz 1,Review and test,60,2`}
               </pre>
             </div>
           </div>
@@ -139,6 +139,7 @@ export function CSVImportDialog({ goalId, open, onOpenChange, onSuccess }: CSVIm
                     <th className="text-left py-2 px-2">Day</th>
                     <th className="text-left py-2 px-2">Title</th>
                     <th className="text-left py-2 px-2">Minutes</th>
+                    <th className="text-left py-2 px-2">Type</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -147,6 +148,9 @@ export function CSVImportDialog({ goalId, open, onOpenChange, onSuccess }: CSVIm
                       <td className="py-2 px-2">{row.day_number}</td>
                       <td className="py-2 px-2">{row.title}</td>
                       <td className="py-2 px-2">{row.estimated_minutes || '-'}</td>
+                      <td className="py-2 px-2">
+                        {row.task_type === 'secondary' ? 'Bonus' : 'Main'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

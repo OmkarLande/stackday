@@ -1,10 +1,12 @@
 'use client';
 
-import { Check, Trash2 } from 'lucide-react';
+import { Check, Trash2, Pencil } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { deletePlanAction } from '@/app/actions/plans';
+import { useState } from 'react';
+import { EditPlanDialog } from './edit-plan-dialog';
 
 export interface ThirtyDayGridProps {
   plans: any[];
@@ -12,6 +14,8 @@ export interface ThirtyDayGridProps {
 }
 
 export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
+  const [editingPlan, setEditingPlan] = useState<any>(null);
+
   const handleDelete = async (planId: string) => {
     if (!confirm('Are you sure you want to delete this plan?')) return;
 
@@ -52,21 +56,36 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                     {isCompleted && <Check className="h-4 w-4 text-green-600 mt-1" />}
                   </div>
                   {plan && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
-                      onClick={() => handleDelete(plan.id)}
-                    >
-                      <Trash2 className="h-3 w-3 text-destructive" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => setEditingPlan(plan)}
+                      >
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleDelete(plan.id)}
+                      >
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
                   )}
                 </div>
 
                 {plan ? (
                   <>
                     <div>
-                      <p className="text-sm font-semibold line-clamp-2">{plan.title}</p>
+                      <div className="flex items-center gap-1">
+                        <p className="text-sm font-semibold line-clamp-1 flex-1">{plan.title}</p>
+                        <span className="text-[10px]" title={plan.task_type === 'secondary' ? 'Bonus Task' : 'Main Task'}>
+                          {plan.task_type === 'secondary' ? '⚡' : '🔥'}
+                        </span>
+                      </div>
                       {plan.estimated_minutes && (
                         <p className="text-xs text-muted-foreground mt-1">{plan.estimated_minutes} min</p>
                       )}
@@ -80,6 +99,13 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
           </Card>
         );
       })}
+
+      <EditPlanDialog
+        plan={editingPlan}
+        open={!!editingPlan}
+        onOpenChange={(open) => !open && setEditingPlan(null)}
+        onSuccess={onPlansUpdate}
+      />
     </div>
   );
 }
