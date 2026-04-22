@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 import { DailyTaskCard } from '@/components/daily-task-card';
 import { StreakDisplay } from '@/components/streak-display';
 import { getOrCreateTodayTaskAction } from '@/app/actions/tasks';
+import { TaskType } from '@/lib/Enums/TaskType';
 
 export default function HomePage() {
-  const [dailyTask, setDailyTask] = useState(null);
+  const [dailyTasks, setDailyTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,7 +18,7 @@ export default function HomePage() {
         setLoading(true);
         const result = await getOrCreateTodayTaskAction();
         if (result.success) {
-          setDailyTask(result.data);
+          setDailyTasks(result.data || []);
           setError(null);
         } else {
           setError(result.error || 'Failed to load task');
@@ -45,7 +46,7 @@ export default function HomePage() {
     );
   }
 
-  if (error && !dailyTask) {
+  if (error && dailyTasks.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-8">
         <div className="rounded-lg border border-destructive bg-card p-8 text-center">
@@ -58,11 +59,27 @@ export default function HomePage() {
     );
   }
 
+  const primaryTask = dailyTasks.find((t) => t.task_type === TaskType.PRIMARY);
+  const isPrimaryCompleted = primaryTask?.status === TaskStatus.COMPLETED;
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="space-y-6">
         <StreakDisplay />
-        {dailyTask && <DailyTaskCard task={dailyTask} onTaskUpdate={() => window.location.reload()} />}
+        {dailyTasks.length > 0 && (
+          <div className="space-y-4">
+            {dailyTasks
+              .sort((a, b) => (a.task_type === TaskType.PRIMARY ? -1 : 1)) // primary first
+              .map((task) => (
+                <DailyTaskCard
+                  key={task.id}
+                  task={task}
+                  isPrimaryCompleted={isPrimaryCompleted}
+                  onTaskUpdate={() => window.location.reload()}
+                />
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );

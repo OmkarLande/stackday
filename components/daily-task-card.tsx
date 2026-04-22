@@ -6,22 +6,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Check, X } from 'lucide-react';
-import { updateDailyTaskStatusAction, addTaskNotesAction } from '@/app/actions/tasks';
+import { updateDailyTaskStatusAction, addTaskNotesAction, checkPrimaryTaskCompletedAction } from '@/app/actions/tasks';
+import { TaskType } from '@/lib/Enums/TaskType';
+import { TaskStatus } from '@/lib/Enums/TaskStatus';
 
 export interface DailyTaskCardProps {
   task: any;
+  isPrimaryCompleted?: boolean;
   onTaskUpdate: () => void;
 }
 
-export function DailyTaskCard({ task, onTaskUpdate }: DailyTaskCardProps) {
+export function DailyTaskCard({ task, isPrimaryCompleted, onTaskUpdate }: DailyTaskCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [notes, setNotes] = useState(task.notes || '');
   const [isEditing, setIsEditing] = useState(false);
 
+
   const handleComplete = async () => {
     setIsLoading(true);
+    if (task.task_type === TaskType.SECONDARY && !isPrimaryCompleted) {
+      toast.error('Complete your main task first! 🔥');
+      setIsLoading(false);
+      return;
+    }
     try {
-      const result = await updateDailyTaskStatusAction(task.id, 'completed');
+      const result = await updateDailyTaskStatusAction(task.id, TaskStatus.COMPLETED);
       if (result.success) {
         toast.success('Task marked as completed!');
         onTaskUpdate();
@@ -38,7 +47,7 @@ export function DailyTaskCard({ task, onTaskUpdate }: DailyTaskCardProps) {
   const handleSkip = async () => {
     setIsLoading(true);
     try {
-      const result = await updateDailyTaskStatusAction(task.id, 'skipped');
+      const result = await updateDailyTaskStatusAction(task.id, TaskStatus.SKIPPED);
       if (result.success) {
         toast.success('Task marked as skipped');
         onTaskUpdate();
@@ -72,10 +81,20 @@ export function DailyTaskCard({ task, onTaskUpdate }: DailyTaskCardProps) {
   const goalTitle = task.plan?.goal?.title || 'Unknown Goal';
 
   return (
-    <Card className="w-full">
+    <Card className={`w-full ${task.task_type === TaskType.SECONDARY ? 'opacity-90 border-dashed' : ''}`}>
       <CardHeader>
-        <div className="mb-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-sm">
-          {goalTitle}
+        <div className="mb-2 flex items-center justify-between">
+          <div className="inline-block rounded-full bg-primary/10 px-3 py-1 text-sm">
+            {goalTitle}
+          </div>
+          {task.task_type === TaskType.PRIMARY ? (
+            <span className="text-sm font-semibold text-primary">🔥 Main</span>
+          ) : (
+            <span className="text-sm text-muted-foreground">⚡ Bonus</span>
+          )}
+          {task.is_optional && (
+            <p className="text-xs text-muted-foreground">Optional — do if you have extra time</p>
+          )}
         </div>
         <CardTitle className="text-3xl">{task.plan?.title}</CardTitle>
         <CardDescription className="mt-2">{task.plan?.description}</CardDescription>
@@ -154,10 +173,10 @@ export function DailyTaskCard({ task, onTaskUpdate }: DailyTaskCardProps) {
             size="lg"
             className="flex-1"
             onClick={handleComplete}
-            disabled={isLoading || task.status === 'completed' || task.status === 'skipped'}
+            disabled={isLoading || task.status === TaskStatus.COMPLETED || task.status === TaskStatus.SKIPPED || (task.task_type === TaskType.SECONDARY && !isPrimaryCompleted)}
           >
             <Check className="mr-2 h-5 w-5" />
-            Complete
+            {task.task_type === TaskType.PRIMARY ? 'Complete' : 'Complete Bonus'}
           </Button>
           <Button
             size="lg"
