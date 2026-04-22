@@ -56,7 +56,7 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
       {days.map(day => {
         const plan = plansMap.get(day);
-        const isCompleted = plan?.daily_tasks?.some(t => t.status === TaskStatus.COMPLETED);
+        const isCompleted = plan?.daily_tasks?.some((t: any) => t.status === TaskStatus.COMPLETED);
 
         return (
           <Card
@@ -102,9 +102,9 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                           {plan.is_optional ? '⚡' : '🔥'}
                         </span>
                       </div>
-                      
+
                       <p className="text-xs text-muted-foreground line-clamp-2">{plan.description}</p>
-                      
+
                       <div className="flex items-center justify-between gap-1 mt-1">
                         <span className="text-[10px] font-medium text-muted-foreground">
                           {plan.is_optional ? '⚡ Bonus Task' : '🔥 Main Task'}
@@ -118,30 +118,30 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                       {plan.daily_tasks && plan.daily_tasks.length > 0 && (
                         <div className="pt-2 border-t mt-2 space-y-2">
                           {(() => {
-                            const latestTask = [...plan.daily_tasks].sort((a, b) => 
+                            const latestTask = [...plan.daily_tasks].sort((a, b) =>
                               new Date(b.task_date).getTime() - new Date(a.task_date).getTime()
                             )[0];
-                            
+
                             return (
                               <>
                                 <div className="flex items-center justify-between">
-                                  <Badge 
+                                  <Badge
                                     variant={
                                       latestTask.status === TaskStatus.COMPLETED ? 'default' :
-                                      latestTask.status === TaskStatus.SKIPPED ? 'destructive' :
-                                      'outline'
+                                        latestTask.status === TaskStatus.SKIPPED ? 'destructive' :
+                                          'outline'
                                     }
                                     className="text-[9px] px-1 py-0 h-4"
                                   >
                                     {latestTask.status.toUpperCase()}
                                   </Badge>
                                 </div>
-                                
+
                                 <div className="flex gap-1">
                                   {latestTask.status === TaskStatus.SKIPPED && (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       className="h-6 text-[10px] flex-1 px-1"
                                       onClick={() => handleManualAction(latestTask.id, TaskStatus.PENDING)}
                                     >
@@ -150,9 +150,9 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                                     </Button>
                                   )}
                                   {latestTask.status !== TaskStatus.COMPLETED && (
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
                                       className="h-6 text-[10px] flex-1 px-1"
                                       onClick={() => handleManualAction(latestTask.id, TaskStatus.COMPLETED)}
                                     >
