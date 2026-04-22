@@ -19,7 +19,6 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | ''>('');
-  const [taskType, setTaskType] = useState<'primary' | 'secondary'>('primary');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -27,7 +26,7 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
       setTitle(plan.title || '');
       setDescription(plan.description || '');
       setEstimatedMinutes(plan.estimated_minutes || '');
-      setTaskType(plan.task_type || 'primary');
+      setEstimatedMinutes(plan.estimated_minutes || '');
     }
   }, [plan]);
 
@@ -40,7 +39,6 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
         title,
         description,
         estimated_minutes: estimatedMinutes ? Number(estimatedMinutes) : undefined,
-        task_type: taskType,
       });
 
       if (result.success) {
@@ -78,42 +76,15 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Minutes</label>
-              <Input
-                type="number"
-                min="1"
-                value={estimatedMinutes}
-                onChange={(e) => setEstimatedMinutes(e.target.value ? Number(e.target.value) : '')}
-                disabled={isLoading}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Type</label>
-              <div className="flex gap-1">
-                <Button
-                  type="button"
-                  variant={taskType === 'primary' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTaskType('primary')}
-                  className="flex-1 px-1 h-9"
-                  disabled={isLoading}
-                >
-                  🔥 Main
-                </Button>
-                <Button
-                  type="button"
-                  variant={taskType === 'secondary' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setTaskType('secondary')}
-                  className="flex-1 px-1 h-9"
-                  disabled={isLoading}
-                >
-                  ⚡ Bonus
-                </Button>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Minutes</label>
+            <Input
+              type="number"
+              min="1"
+              value={estimatedMinutes}
+              onChange={(e) => setEstimatedMinutes(e.target.value ? Number(e.target.value) : '')}
+              disabled={isLoading}
+            />
           </div>
 
           <div className="space-y-2">

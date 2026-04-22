@@ -13,10 +13,10 @@ export async function getOrCreateTodayTask() {
     }
 
     const userId = session.userId;
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // 1. Check if tasks already exist for today
     const existingTasks = await prisma.dailyTask.findMany({
       where: {
         user_id: userId,
@@ -25,80 +25,99 @@ export async function getOrCreateTodayTask() {
       include: {
         plan: { include: { goal: true } },
       },
+      orderBy: { task_type: "asc" }, // Primary first
     });
 
     if (existingTasks.length > 0) {
       return { success: true, data: existingTasks };
     }
 
-    const primaryGoal = await prisma.goal.findFirst({
+    // 2. Determine Primary Task (Carry Forward or Next Plan)
+    let primaryPlan = null;
+
+    // Check yesterday's primary task status
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const yesterdayPrimary = await prisma.dailyTask.findFirst({
       where: {
         user_id: userId,
-        active: true,
-        plans: {
-          some: {
-            daily_tasks: { none: {} },
-          },
-        },
-      },
-      orderBy: {
-        priority: "asc", // lower = higher priority
+        task_date: yesterday,
+        task_type: TaskType.PRIMARY,
       },
     });
 
-    if (!primaryGoal) {
-      return { success: false, error: "All plans completed 🎉" };
-    }
-
-    const primaryPlan = await prisma.plan.findFirst({
-      where: {
-        user_id: userId,
-        goal_id: primaryGoal.id,
-        daily_tasks: { none: {} },
-      },
-      orderBy: {
-        day_number: "asc",
-      },
-      include: { goal: true },
-    });
-
-    const secondaryGoal = await prisma.goal.findFirst({
-      where: {
-        user_id: userId,
-        id: { not: primaryGoal.id },
-        active: true,
-        plans: {
-          some: {
-            daily_tasks: { none: {} },
-          },
-        },
-      },
-      orderBy: {
-        priority: "asc",
-      },
-    });
-
-    let secondaryPlan = null;
-
-    if (secondaryGoal) {
-      secondaryPlan = await prisma.plan.findFirst({
-        where: {
-          user_id: userId,
-          goal_id: secondaryGoal.id,
-          daily_tasks: { none: {} },
-        },
-        orderBy: [
-          { estimated_minutes: "asc" }, // pick smallest task
-          { day_number: "asc" },
-        ],
+    if (yesterdayPrimary && yesterdayPrimary.status === TaskStatus.SKIPPED) {
+      // CARRY FORWARD: Reuse yesterday's skipped plan
+      primaryPlan = await prisma.plan.findUnique({
+        where: { id: yesterdayPrimary.plan_id },
         include: { goal: true },
       });
     }
 
+    // If no carry forward, find the next unused plan from the highest priority goal
+    if (!primaryPlan) {
+      const activeGoals = await prisma.goal.findMany({
+        where: { user_id: userId, active: true },
+        orderBy: { priority: "asc" },
+      });
+
+      for (const goal of activeGoals) {
+        const nextPlan = await prisma.plan.findFirst({
+          where: {
+            goal_id: goal.id,
+            daily_tasks: { none: {} },
+          },
+          orderBy: { day_number: "asc" },
+          include: { goal: true },
+        });
+
+        if (nextPlan) {
+          primaryPlan = nextPlan;
+          break;
+        }
+      }
+    }
+
+    if (!primaryPlan) {
+      return { success: false, error: "No primary tasks found. All plans might be completed!" };
+    }
+
+    // 3. Determine Secondary Task (Optional)
+    let secondaryPlan = null;
+    const otherGoals = await prisma.goal.findMany({
+      where: {
+        user_id: userId,
+        active: true,
+        id: { not: primaryPlan.goal_id },
+      },
+      orderBy: { priority: "asc" },
+    });
+
+    for (const goal of otherGoals) {
+      const nextPlan = await prisma.plan.findFirst({
+        where: {
+          goal_id: goal.id,
+          daily_tasks: { none: {} },
+        },
+        orderBy: [
+          { estimated_minutes: "asc" },
+          { day_number: "asc" },
+        ],
+        include: { goal: true },
+      });
+
+      if (nextPlan) {
+        secondaryPlan = nextPlan;
+        break;
+      }
+    }
+
+    // 4. Create Today's Tasks
     const createdTasks = await prisma.$transaction(async (tx) => {
       const tasks = [];
 
-      // PRIMARY
+      // Create PRIMARY
       const primaryTask = await tx.dailyTask.create({
         data: {
           user_id: userId,
@@ -106,16 +125,15 @@ export async function getOrCreateTodayTask() {
           goal_id: primaryPlan!.goal_id,
           task_date: today,
           status: TaskStatus.PENDING,
-          task_type: primaryPlan!.task_type,
+          task_type: TaskType.PRIMARY,
           ai_reason: `Focus on your main goal: "${primaryPlan!.goal.title}"`,
-          ai_steps: `1. Start immediately\n2. Work for ${primaryPlan!.estimated_minutes || 45} mins\n3. Mark complete`,
+          ai_steps: `1. Carry forward from yesterday if skipped\n2. Work for ${primaryPlan!.estimated_minutes || 45} mins\n3. Mark complete to maintain your streak`,
         },
         include: { plan: { include: { goal: true } } },
       });
-
       tasks.push(primaryTask);
 
-      // SECONDARY (optional)
+      // Create SECONDARY if available
       if (secondaryPlan) {
         const secondaryTask = await tx.dailyTask.create({
           data: {
@@ -124,14 +142,13 @@ export async function getOrCreateTodayTask() {
             goal_id: secondaryPlan.goal_id,
             task_date: today,
             status: TaskStatus.PENDING,
-            task_type: secondaryPlan.task_type,
+            task_type: TaskType.SECONDARY,
             is_optional: true,
             ai_reason: `Quick win for "${secondaryPlan.goal.title}"`,
-            ai_steps: `1. Do this quickly\n2. Keep it light\n3. Bonus progress`,
+            ai_steps: `1. Bonus task\n2. Keep it under ${secondaryPlan.estimated_minutes || 20} mins\n3. Boost your productivity`,
           },
           include: { plan: { include: { goal: true } } },
         });
-
         tasks.push(secondaryTask);
       }
 
@@ -140,10 +157,10 @@ export async function getOrCreateTodayTask() {
 
     return { success: true, data: createdTasks };
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error generating tasks:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Something went wrong",
+      error: error instanceof Error ? error.message : "Failed to generate tasks",
     };
   }
 }

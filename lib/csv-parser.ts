@@ -5,7 +5,6 @@ export interface PlanCSVRow {
   title: string;
   description?: string;
   estimated_minutes?: number;
-  task_type?: "primary" | "secondary";
 }
 
 export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
@@ -61,12 +60,6 @@ export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
                           row["Minutes"],
                       )
                     : undefined,
-                task_type:
-                  row.task_type === "2" ||
-                  row["Task Type"] === "2" ||
-                  row["type"] === "2"
-                    ? "secondary"
-                    : "primary",
               };
             });
 

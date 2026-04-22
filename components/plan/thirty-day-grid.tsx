@@ -44,9 +44,8 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
         return (
           <Card
             key={day}
-            className={`relative overflow-hidden transition-all ${
-              isCompleted ? 'bg-green-50 border-green-200' : 'bg-muted/50'
-            }`}
+            className={`relative overflow-hidden transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-muted/50'
+              }`}
           >
             <CardContent className="p-4">
               <div className="space-y-2">
@@ -86,6 +85,12 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                           {plan.task_type === 'secondary' ? '⚡' : '🔥'}
                         </span>
                       </div>
+                      {/* description only in 2 lines */}
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{plan.description}</p>
+                      {/* task type */}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {plan.task_type === 'secondary' ? '⚡ Bonus Task' : '🔥 Main Task'}
+                      </p>
                       {plan.estimated_minutes && (
                         <p className="text-xs text-muted-foreground mt-1">{plan.estimated_minutes} min</p>
                       )}

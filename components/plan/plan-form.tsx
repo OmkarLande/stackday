@@ -19,7 +19,6 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [estimatedMinutes, setEstimatedMinutes] = useState<number | ''>('');
-  const [taskType, setTaskType] = useState<'primary' | 'secondary'>('primary');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,8 +42,8 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
         Number(dayNumber),
         title,
         description,
-        estimatedMinutes ? Number(estimatedMinutes) : undefined,
-        taskType
+        description,
+        estimatedMinutes ? Number(estimatedMinutes) : undefined
       );
 
       if (result.success) {
@@ -53,7 +52,6 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
         setTitle('');
         setDescription('');
         setEstimatedMinutes('');
-        setTaskType('primary');
         onSuccess();
       } else {
         toast.error(result.error || 'Failed to create plan');
@@ -106,31 +104,6 @@ export function PlanForm({ goalId, existingDays, onSuccess }: PlanFormProps) {
             </div>
           </div>
           
-          <div className="space-y-2">
-            <label className="block text-sm font-medium">
-              Task Type
-            </label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={taskType === 'primary' ? 'default' : 'outline'}
-                onClick={() => setTaskType('primary')}
-                className="flex-1"
-                disabled={isLoading}
-              >
-                🔥 Main
-              </Button>
-              <Button
-                type="button"
-                variant={taskType === 'secondary' ? 'default' : 'outline'}
-                onClick={() => setTaskType('secondary')}
-                className="flex-1"
-                disabled={isLoading}
-              >
-                ⚡ Bonus
-              </Button>
-            </div>
-          </div>
 
           <div className="space-y-2">
             <label htmlFor="title" className="block text-sm font-medium">

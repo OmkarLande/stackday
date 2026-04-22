@@ -63,7 +63,6 @@ export async function importPlansFromCSVAction(
             title: row.title,
             description: row.description,
             estimated_minutes: row.estimated_minutes,
-            task_type: row.task_type,
           },
         })
       )

@@ -9,8 +9,7 @@ export async function createPlanAction(
   day_number: number,
   title: string,
   description: string,
-  estimated_minutes?: number,
-  task_type: TaskType = TaskType.PRIMARY
+  estimated_minutes?: number
 ) {
   try {
     const session = await getSession();
@@ -35,7 +34,6 @@ export async function createPlanAction(
         title,
         description,
         estimated_minutes,
-        task_type,
       },
     });
 
@@ -90,7 +88,6 @@ export async function updatePlanAction(
     title?: string;
     description?: string;
     estimated_minutes?: number;
-    task_type?: TaskType;
   }
 ) {
   try {
