@@ -2,6 +2,7 @@
 
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { TaskType } from '@/lib/Enums/TaskType';
 
 export async function createPlanAction(
   goalId: string,
@@ -9,7 +10,7 @@ export async function createPlanAction(
   title: string,
   description: string,
   estimated_minutes?: number,
-  task_type: 'primary' | 'secondary' = 'primary'
+  task_type: TaskType = TaskType.PRIMARY
 ) {
   try {
     const session = await getSession();
@@ -89,7 +90,7 @@ export async function updatePlanAction(
     title?: string;
     description?: string;
     estimated_minutes?: number;
-    task_type?: 'primary' | 'secondary';
+    task_type?: TaskType;
   }
 ) {
   try {
@@ -112,9 +113,9 @@ export async function updatePlanAction(
     });
 
     return { success: true, data: updated };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating plan:', error);
-    return { success: false, error: 'Failed to update plan' };
+    return { success: false, error: error.message || 'Failed to update plan' };
   }
 }
 

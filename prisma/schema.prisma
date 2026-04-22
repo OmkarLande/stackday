@@ -53,6 +53,7 @@ model Plan {
   title             String
   description       String?
   estimated_minutes Int?
+  task_type         TaskType @default(primary)
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
 
