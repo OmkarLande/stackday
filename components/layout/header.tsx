@@ -13,7 +13,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { logoutAction } from '@/app/actions/auth';
-import { User } from 'lucide-react';
+import { User, Moon, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 export interface HeaderProps {
   userName?: string;
@@ -22,6 +23,7 @@ export interface HeaderProps {
 
 export function Header({ userName = 'User', email = '' }: HeaderProps) {
   const router = useRouter();
+  const { setTheme, theme } = useTheme();
 
   const handleLogout = async () => {
     const result = await logoutAction();
@@ -40,9 +42,12 @@ export function Header({ userName = 'User', email = '' }: HeaderProps) {
           <h1 className="text-2xl font-bold">Stackday</h1>
         </Link>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex items-center gap-4">
           <Link href="/" className="text-sm hover:text-primary">
             Today
+          </Link>
+          <Link href="/focus" className="text-sm hover:text-primary">
+            Focus
           </Link>
           <Link href="/goals" className="text-sm hover:text-primary">
             Goals
@@ -53,6 +58,17 @@ export function Header({ userName = 'User', email = '' }: HeaderProps) {
           <Link href="/logs" className="text-sm hover:text-primary">
             Logs
           </Link>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            className="mr-2"
+          >
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

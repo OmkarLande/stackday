@@ -13,6 +13,7 @@ import { getGoalsAction } from '@/app/actions/goals';
 import { PlanForm } from '@/components/plan/plan-form';
 import { ThirtyDayGrid } from '@/components/plan/thirty-day-grid';
 import { CSVImportDialog } from '@/components/plan/csv-import-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function PlanPageContent() {
   const searchParams = useSearchParams();
@@ -148,8 +149,19 @@ function PlanPageContent() {
       )}
 
       {loading ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Loading 30-day plan...</p>
+        <div className="space-y-6 mt-6">
+          <div className="flex justify-between items-center mb-6">
+             <Skeleton className="h-8 w-48" />
+             <div className="flex gap-2">
+               <Skeleton className="h-10 w-28" />
+               <Skeleton className="h-10 w-28" />
+             </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 w-full rounded-xl" />
+            ))}
+          </div>
         </div>
       ) : (
         <>
@@ -181,7 +193,16 @@ function PlanPageContent() {
 
 export default function PlanPage() {
   return (
-    <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
+    <Suspense fallback={
+      <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
+        <Skeleton className="h-6 w-24" />
+        <Skeleton className="h-10 w-64" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+      </div>
+    }>
       <PlanPageContent />
     </Suspense>
   );

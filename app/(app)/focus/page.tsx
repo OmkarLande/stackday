@@ -9,6 +9,7 @@ import { ActivityHeatmap } from "@/components/focus/activity-heatmap";
 import { StatsPanel } from "@/components/focus/stats-panel";
 import { TaskType } from "@/lib/Enums/TaskType";
 import { isSameDay } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FocusDashboardPage() {
   const [data, setData] = useState<{ dailyTasks: any[]; streakRecord: any } | null>(null);
@@ -34,9 +35,14 @@ export default function FocusDashboardPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8 animate-pulse space-y-8">
-        <div className="h-64 bg-card rounded-2xl border"></div>
-        <div className="h-96 bg-card rounded-2xl border"></div>
+      <div className="mx-auto max-w-4xl px-4 py-8 space-y-8">
+        <div className="space-y-2 mb-8">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-6 w-48" />
+        </div>
+        <Skeleton className="h-[400px] w-full rounded-2xl" />
+        <Skeleton className="h-[300px] w-full rounded-2xl" />
+        <Skeleton className="h-[200px] w-full rounded-2xl" />
       </div>
     );
   }

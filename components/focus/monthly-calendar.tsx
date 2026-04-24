@@ -12,10 +12,14 @@ interface MonthlyCalendarProps {
 
 export function MonthlyCalendar({ dailyTasks }: MonthlyCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  
+
   const today = new Date();
-  const monthStart = startOfMonth(today);
-  const monthEnd = endOfMonth(today);
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+
+  const displayDate = new Date(currentYear, currentMonth, 1);
+  const monthStart = startOfMonth(displayDate);
+  const monthEnd = endOfMonth(displayDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   // Add padding for start of month
@@ -35,7 +39,8 @@ export function MonthlyCalendar({ dailyTasks }: MonthlyCalendarProps) {
   const getDayStats = (date: Date) => {
     const tasks = getTasksForDay(date);
     const completed = tasks.filter(t => t.status === TaskStatus.COMPLETED).length;
-    return { completed, total: tasks.length, tasks };
+    const skipped = tasks.filter(t => t.status === TaskStatus.SKIPPED).length;
+    return { completed, skipped, total: tasks.length, tasks };
   };
 
   const selectedTasks = selectedDate ? getTasksForDay(selectedDate) : [];
@@ -43,30 +48,59 @@ export function MonthlyCalendar({ dailyTasks }: MonthlyCalendarProps) {
   return (
     <>
       <div className="bg-card rounded-2xl border shadow-sm p-6">
-        <h3 className="text-lg font-medium mb-4">{format(today, "MMMM yyyy")}</h3>
-        
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium">{format(displayDate, "MMMM yyyy")}</h3>
+          <div className="flex gap-2">
+            <select
+              value={currentMonth}
+              onChange={(e) => setCurrentMonth(Number(e.target.value))}
+              className="bg-secondary text-sm rounded-md px-2 py-1 border-none focus:ring-1 focus:ring-green-500"
+            >
+              {Array.from({ length: 12 }).map((_, i) => (
+                <option key={i} value={i}>
+                  {format(new Date(2000, i, 1), "MMM")}
+                </option>
+              ))}
+            </select>
+            <select
+              value={currentYear}
+              onChange={(e) => setCurrentYear(Number(e.target.value))}
+              className="bg-secondary text-sm rounded-md px-2 py-1 border-none focus:ring-1 focus:ring-green-500"
+            >
+              {Array.from({ length: 5 }).map((_, i) => {
+                const year = today.getFullYear() - 2 + i;
+                return (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        </div>
+
         <div className="grid grid-cols-7 gap-2">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
             <div key={day} className="text-center text-sm font-medium text-muted-foreground pb-2">
               {day}
             </div>
           ))}
-          
+
           {allDays.map((day, i) => {
-            const isCurrentMonth = isSameMonth(day, today);
+            const isCurrentMonth = isSameMonth(day, displayDate);
             const isCurrentDay = isToday(day);
             const stats = getDayStats(day);
-            
+
             let bgColor = "bg-secondary/30"; // 0 tasks or default
             let textColor = "text-muted-foreground";
-            
+
             if (isCurrentMonth) {
-              if (stats.completed === 1) {
-                bgColor = "bg-primary/40";
-                textColor = "text-primary-foreground";
-              } else if (stats.completed >= 2) {
-                bgColor = "bg-primary";
-                textColor = "text-primary-foreground";
+              if (stats.completed >= 2) {
+                bgColor = "bg-green-700 dark:bg-green-900";
+                textColor = "text-white";
+              } else if (stats.completed === 1 || stats.skipped > 0) {
+                bgColor = "bg-green-500/80 dark:bg-green-600";
+                textColor = "text-white";
               }
             }
 
@@ -76,18 +110,20 @@ export function MonthlyCalendar({ dailyTasks }: MonthlyCalendarProps) {
                 onClick={() => isCurrentMonth && setSelectedDate(day)}
                 disabled={!isCurrentMonth}
                 className={`
-                  relative h-20 rounded-xl p-2 transition-all hover:ring-2 ring-primary/50 flex flex-col justify-between items-start
+                  relative h-20 rounded-xl p-2 transition-all hover:ring-2 ring-green-500/50 flex flex-col justify-between items-start
                   ${!isCurrentMonth ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}
                   ${isCurrentDay ? "ring-2 ring-blue-500 bg-blue-500/10" : bgColor}
                 `}
               >
-                <span className={`text-sm font-medium ${isCurrentDay ? "text-blue-500" : textColor}`}>
+                <span className={`text-sm font-medium ${isCurrentDay && !isCurrentMonth ? "text-blue-500" : textColor}`}>
                   {format(day, "d")}
                 </span>
-                
-                {isCurrentMonth && stats.completed > 0 && (
-                  <span className={`text-xs font-bold ${textColor}`}>
-                    {stats.completed} ✔
+
+                {isCurrentMonth && (stats.completed > 0 || stats.skipped > 0) && (
+                  <span className={`text-xs font-bold italic ${textColor}`}>
+                    {stats.completed > 0 ? `${stats.completed} ✔` : ''}
+                    {stats.completed > 0 && stats.skipped > 0 ? ' ' : ''}
+                    {stats.skipped > 0 ? `${stats.skipped} ✗` : ''}
                   </span>
                 )}
               </button>
