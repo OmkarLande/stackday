@@ -1,17 +1,20 @@
-'use server';
+"use server";
 
-import { getSession } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-import { parseCSV, PlanCSVRow } from '@/lib/csv-parser';
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { parseCSV, PlanCSVRow } from "@/lib/csv-parser";
 
-export async function importPlansFromCSVAction(
-  goalId: string,
-  fileBuffer: Buffer
-) {
+export async function importPlansFromCSVAction(formData: FormData) {
   try {
     const session = await getSession();
+    const file = formData.get("file") as File;
+    const goalId = formData.get("goalId") as string;
+
+    if (!file || !goalId) {
+      return { success: false, error: "Missing data" };
+    }
     if (!session) {
-      return { success: false, error: 'Not authenticated' };
+      return { success: false, error: "Not authenticated" };
     }
 
     // Verify goal ownership
@@ -20,16 +23,17 @@ export async function importPlansFromCSVAction(
     });
 
     if (!goal || goal.user_id !== session.userId) {
-      return { success: false, error: 'Goal not found or unauthorized' };
+      return { success: false, error: "Goal not found or unauthorized" };
     }
 
     // Parse CSV
-    const csvString = fileBuffer.toString('utf-8');
+    const csvString = await file.text();
     let parsedRows: PlanCSVRow[];
     try {
       parsedRows = await parseCSV(csvString);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Invalid CSV format';
+      const errorMsg =
+        error instanceof Error ? error.message : "Invalid CSV format";
       return { success: false, error: errorMsg };
     }
 
@@ -38,14 +42,14 @@ export async function importPlansFromCSVAction(
       where: {
         goal_id: goalId,
         day_number: {
-          in: parsedRows.map(r => r.day_number),
+          in: parsedRows.map((r) => r.day_number),
         },
       },
       select: { day_number: true },
     });
 
     if (existingDays.length > 0) {
-      const conflictingDays = existingDays.map(d => d.day_number).join(', ');
+      const conflictingDays = existingDays.map((d) => d.day_number).join(", ");
       return {
         success: false,
         error: `Days already exist: ${conflictingDays}. Please delete them first or import to a different goal.`,
@@ -54,7 +58,7 @@ export async function importPlansFromCSVAction(
 
     // Create plans
     const createdPlans = await Promise.all(
-      parsedRows.map(row =>
+      parsedRows.map((row) =>
         prisma.plan.create({
           data: {
             user_id: session.userId,
@@ -65,8 +69,8 @@ export async function importPlansFromCSVAction(
             estimated_minutes: row.estimated_minutes,
             is_optional: row.is_optional,
           },
-        })
-      )
+        }),
+      ),
     );
 
     return {
@@ -77,16 +81,21 @@ export async function importPlansFromCSVAction(
       },
     };
   } catch (error) {
-    console.error('Error importing plans:', error);
-    const errorMsg = error instanceof Error ? error.message : 'Failed to import plans';
+    console.error("Error importing plans:", error);
+    const errorMsg =
+      error instanceof Error ? error.message : "Failed to import plans";
     return { success: false, error: errorMsg };
   }
 }
 
-export async function validateCSVAction(fileBuffer: Buffer) {
+export async function validateCSVAction(formData: FormData) {
   try {
-    const csvString = fileBuffer.toString('utf-8');
-    const parsedRows = await parseCSV(csvString);
+    const file = formData.get("file") as File;
+    if (!file) {
+      return { success: false, error: "No file provided" };
+    }
+    const text = await file.text();
+    const parsedRows = await parseCSV(text);
 
     return {
       success: true,
@@ -96,7 +105,8 @@ export async function validateCSVAction(fileBuffer: Buffer) {
       },
     };
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : 'Invalid CSV format';
+    const errorMsg =
+      error instanceof Error ? error.message : "Invalid CSV format";
     return { success: false, error: errorMsg };
   }
 }

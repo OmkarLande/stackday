@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Trash2, Pencil, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { Check, Trash2, Pencil, RotateCcw, CheckCircle2, Clock, Zap, Flame } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { TaskStatus } from '@/lib/Enums/TaskStatus';
 import { useState } from 'react';
 import { EditPlanDialog } from './edit-plan-dialog';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export interface ThirtyDayGridProps {
   plans: any[];
@@ -53,123 +54,173 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {days.map(day => {
         const plan = plansMap.get(day);
         const isCompleted = plan?.daily_tasks?.some((t: any) => t.status === TaskStatus.COMPLETED);
+        const isSkipped = plan?.daily_tasks?.some((t: any) => t.status === TaskStatus.SKIPPED);
 
         return (
           <Card
             key={day}
-            className={`relative overflow-hidden transition-all ${isCompleted ? 'bg-green-50 border-green-200' : 'bg-muted/50'
-              }`}
+            className={cn(
+              "group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border/50",
+              plan ? "bg-card" : "bg-muted/30 border-dashed opacity-60",
+              isCompleted && "bg-green-500/5 border-green-500/30 dark:bg-green-500/[0.02] dark:border-green-500/20"
+            )}
           >
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="text-xs font-medium text-muted-foreground">Day {day}</div>
-                    {isCompleted && <Check className="h-4 w-4 text-green-600 mt-1" />}
+            {/* Completion Glow/Indicator */}
+            {isCompleted && (
+              <div className="absolute -right-4 -top-4 h-16 w-16 bg-green-500/10 blur-2xl transition-all group-hover:bg-green-500/20" />
+            )}
+
+            <CardContent className="p-4 relative">
+              <div className="space-y-3">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className={cn(
+                    "px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase",
+                    plan 
+                      ? isCompleted 
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-primary/10 text-primary dark:bg-primary/20"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    Day {day}
                   </div>
+                  
                   {plan && (
-                    <div className="flex gap-1">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
                         onClick={() => setEditingPlan(plan)}
                       >
-                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                         onClick={() => handleDelete(plan.id)}
                       >
-                        <Trash2 className="h-3 w-3 text-destructive" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   )}
                 </div>
 
                 {plan ? (
-                  <>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-1">
-                        <p className="text-sm font-semibold line-clamp-1 flex-1">{plan.title}</p>
-                        <span className="text-[10px]" title={plan.is_optional ? 'Bonus Task' : 'Main Task'}>
-                          {plan.is_optional ? '⚡' : '🔥'}
-                        </span>
+                  <div className="space-y-3">
+                    {/* Title & Type Icon */}
+                    <div className="flex items-start gap-2">
+                      <div className={cn(
+                        "mt-0.5 p-1 rounded-md shrink-0",
+                        plan.is_optional 
+                          ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" 
+                          : "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+                      )}>
+                        {plan.is_optional ? <Zap className="h-3 w-3" /> : <Flame className="h-3 w-3" />}
                       </div>
+                      <h3 className={cn(
+                        "text-sm font-semibold leading-snug line-clamp-2",
+                        isCompleted && "text-green-700 dark:text-green-400"
+                      )}>
+                        {plan.title}
+                      </h3>
+                    </div>
 
-                      <p className="text-xs text-muted-foreground line-clamp-2">{plan.description}</p>
+                    {/* Description */}
+                    <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                      {plan.description}
+                    </p>
 
-                      <div className="flex items-center justify-between gap-1 mt-1">
-                        <span className="text-[10px] font-medium text-muted-foreground">
-                          {plan.is_optional ? '⚡ Bonus Task' : '🔥 Main Task'}
-                        </span>
-                        {plan.estimated_minutes && (
-                          <span className="text-[10px] text-muted-foreground">{plan.estimated_minutes} min</span>
-                        )}
-                      </div>
-
-                      {/* Status and Actions */}
-                      {plan.daily_tasks && plan.daily_tasks.length > 0 && (
-                        <div className="pt-2 border-t mt-2 space-y-2">
-                          {(() => {
-                            const latestTask = [...plan.daily_tasks].sort((a, b) =>
-                              new Date(b.task_date).getTime() - new Date(a.task_date).getTime()
-                            )[0];
-
-                            return (
-                              <>
-                                <div className="flex items-center justify-between">
-                                  <Badge
-                                    variant={
-                                      latestTask.status === TaskStatus.COMPLETED ? 'default' :
-                                        latestTask.status === TaskStatus.SKIPPED ? 'destructive' :
-                                          'outline'
-                                    }
-                                    className="text-[9px] px-1 py-0 h-4"
-                                  >
-                                    {latestTask.status.toUpperCase()}
-                                  </Badge>
-                                </div>
-
-                                <div className="flex gap-1">
-                                  {latestTask.status === TaskStatus.SKIPPED && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-6 text-[10px] flex-1 px-1"
-                                      onClick={() => handleManualAction(latestTask.id, TaskStatus.PENDING)}
-                                    >
-                                      <RotateCcw className="h-3 w-3 mr-1" />
-                                      Retry
-                                    </Button>
-                                  )}
-                                  {latestTask.status !== TaskStatus.COMPLETED && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-6 text-[10px] flex-1 px-1"
-                                      onClick={() => handleManualAction(latestTask.id, TaskStatus.COMPLETED)}
-                                    >
-                                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                                      Done
-                                    </Button>
-                                  )}
-                                </div>
-                              </>
-                            );
-                          })()}
+                    {/* Meta Info */}
+                    <div className="flex items-center gap-3">
+                      {plan.estimated_minutes && (
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                          <Clock className="h-3 w-3" />
+                          {plan.estimated_minutes} min
                         </div>
                       )}
+                      <div className={cn(
+                        "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter",
+                        plan.is_optional 
+                          ? "text-amber-600/70 border border-amber-200 dark:border-amber-900/50" 
+                          : "text-orange-600/70 border border-orange-200 dark:border-orange-900/50"
+                      )}>
+                        {plan.is_optional ? 'Bonus' : 'Critical'}
+                      </div>
                     </div>
-                  </>
+
+                    {/* Task Execution Status */}
+                    {plan.daily_tasks && plan.daily_tasks.length > 0 && (
+                      <div className="pt-3 border-t border-border/50 space-y-2">
+                        {(() => {
+                          const latestTask = [...plan.daily_tasks].sort((a, b) =>
+                            new Date(b.task_date).getTime() - new Date(a.task_date).getTime()
+                          )[0];
+
+                          return (
+                            <>
+                              <div className="flex items-center justify-between">
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "text-[9px] font-bold px-2 py-0 h-4 border-none uppercase tracking-widest",
+                                    latestTask.status === TaskStatus.COMPLETED && "bg-green-500/10 text-green-600 dark:text-green-400",
+                                    latestTask.status === TaskStatus.SKIPPED && "bg-destructive/10 text-destructive",
+                                    latestTask.status === TaskStatus.PENDING && "bg-primary/10 text-primary"
+                                  )}
+                                >
+                                  {latestTask.status}
+                                </Badge>
+                                {latestTask.status === TaskStatus.COMPLETED && (
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                )}
+                              </div>
+
+                              <div className="flex gap-1.5 pt-1">
+                                {latestTask.status === TaskStatus.SKIPPED && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-[10px] flex-1 font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
+                                    onClick={() => handleManualAction(latestTask.id, TaskStatus.PENDING)}
+                                  >
+                                    <RotateCcw className="h-3 w-3 mr-1" />
+                                    Retry
+                                  </Button>
+                                )}
+                                {latestTask.status !== TaskStatus.COMPLETED && (
+                                  <Button
+                                    variant={latestTask.status === TaskStatus.PENDING ? "default" : "outline"}
+                                    size="sm"
+                                    className={cn(
+                                      "h-7 text-[10px] flex-1 font-bold transition-all",
+                                      latestTask.status === TaskStatus.PENDING && "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600 border-none shadow-sm shadow-green-500/20"
+                                    )}
+                                    onClick={() => handleManualAction(latestTask.id, TaskStatus.COMPLETED)}
+                                  >
+                                    <Check className="h-3.5 w-3.5 mr-1" />
+                                    Complete
+                                  </Button>
+                                )}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <div className="text-xs text-muted-foreground">No plan</div>
+                  <div className="flex flex-col items-center justify-center py-6 space-y-2 opacity-50">
+                    <div className="h-8 w-8 rounded-full border border-dashed border-muted-foreground flex items-center justify-center">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <p className="text-[10px] font-medium text-muted-foreground">Empty Slot</p>
+                  </div>
                 )}
               </div>
             </CardContent>

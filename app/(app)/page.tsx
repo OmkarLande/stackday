@@ -7,6 +7,11 @@ import { StreakDisplay } from '@/components/streak-display';
 import { getOrCreateTodayTaskAction } from '@/app/actions/tasks';
 import { TaskType } from '@/lib/Enums/TaskType';
 import { TaskStatus } from '@/lib/Enums/TaskStatus';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Sun, Zap, Calendar, Target } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export default function HomePage() {
   const [dailyTasks, setDailyTasks] = useState<any[]>([]);
@@ -37,11 +42,16 @@ export default function HomePage() {
     fetchTask();
   }, []);
 
+  const primaryTask = dailyTasks.find((t) => t.task_type === TaskType.PRIMARY);
+  const isPrimaryCompleted = primaryTask?.status === TaskStatus.COMPLETED;
+
   if (loading) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="rounded-lg border bg-card p-8 text-center">
-          <p className="text-muted-foreground">Loading today&apos;s task...</p>
+      <div className="mx-auto max-w-5xl px-4 py-8 md:py-12 space-y-8">
+        <Skeleton className="h-32 w-full rounded-[2rem]" />
+        <div className="space-y-4">
+          <Skeleton className="h-64 w-full rounded-[2rem]" />
+          <Skeleton className="h-64 w-full rounded-[2rem]" />
         </div>
       </div>
     );
@@ -49,39 +59,94 @@ export default function HomePage() {
 
   if (error && dailyTasks.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-8">
-        <div className="rounded-lg border border-destructive bg-card p-8 text-center">
-          <p className="text-destructive">{error}</p>
-          <p className="mt-4 text-sm text-muted-foreground">
-            Please create a goal and plan first to get started.
-          </p>
+      <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="relative p-10 rounded-[2.5rem] bg-destructive/5 border border-destructive/20 text-center space-y-6 overflow-hidden">
+          <div className="absolute -right-8 -top-8 p-4 opacity-[0.05]">
+            <Target className="h-48 w-48 text-destructive" />
+          </div>
+          <div className="relative z-10 space-y-2">
+            <h2 className="text-2xl font-bold text-destructive">Ready to start?</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              {error === 'No active goals found'
+                ? "You haven't set any goals yet. Every great achievement starts with a clear target."
+                : error}
+            </p>
+          </div>
+          <Link href="/goals" className="inline-block relative z-10">
+            <Button size="lg" className="rounded-full px-8 shadow-lg shadow-primary/20">
+              Create Your First Goal
+            </Button>
+          </Link>
         </div>
       </div>
     );
   }
 
-  const primaryTask = dailyTasks.find((t) => t.task_type === TaskType.PRIMARY);
-  const isPrimaryCompleted = primaryTask?.status === TaskStatus.COMPLETED;
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <div className="space-y-6">
-        <StreakDisplay />
-        {dailyTasks.length > 0 && (
-          <div className="space-y-4">
+    <div className="mx-auto max-w-5xl px-4 py-8 md:py-12 space-y-12">
+      <div className="relative p-8 md:p-12 rounded-[2.5rem] bg-linear-to-br from-green-500/10 via-background to-primary/5 border border-border/50 shadow-sm overflow-hidden">
+        <div className="absolute -right-8 -top-8 p-4 opacity-[0.03] dark:opacity-[0.05]">
+          <Sun className="h-64 w-64 text-green-500" />
+        </div>
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-bold text-green-600 dark:text-green-400 uppercase tracking-[0.2em]">
+              <Calendar className="h-4 w-4" />
+              {today}
+            </div>
+            <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-foreground">
+              Make it <span className="text-green-600 dark:text-green-500 italic">Count.</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-lg leading-relaxed">
+              Focus on what matters most today. Small wins stack up to massive results.
+            </p>
+          </div>
+          <div className="shrink-0">
+            <StreakDisplay />
+          </div>
+        </div>
+      </div>
+
+      {dailyTasks.length > 0 ? (
+        <div className="space-y-8 max-w-3xl mx-auto">
+          <div className="flex items-center gap-4 px-2">
+            <div className="h-px flex-1 bg-border/50" />
+            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-[0.3em] whitespace-nowrap">
+              Today's Mission
+            </h2>
+            <div className="h-px flex-1 bg-border/50" />
+          </div>
+
+          <div className="space-y-6">
             {dailyTasks
-              .sort((a, b) => (a.task_type === TaskType.PRIMARY ? -1 : 1)) // primary first
+              .sort((a, b) => (a.task_type === TaskType.PRIMARY ? -1 : 1))
               .map((task) => (
-                <DailyTaskCard
-                  key={task.id}
-                  task={task}
-                  isPrimaryCompleted={isPrimaryCompleted}
-                  onTaskUpdate={() => window.location.reload()}
-                />
+                <div key={task.id} className="animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both">
+                  <DailyTaskCard
+                    task={task}
+                    isPrimaryCompleted={isPrimaryCompleted}
+                    onTaskUpdate={() => window.location.reload()}
+                  />
+                </div>
               ))}
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="text-center py-20 space-y-4">
+          <Zap className="h-12 w-12 text-muted-foreground/20 mx-auto" />
+          <p className="text-muted-foreground">No tasks scheduled for today.</p>
+          <Link href="/plan">
+            <Button variant="link" className="text-primary font-bold">Check your plan →</Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

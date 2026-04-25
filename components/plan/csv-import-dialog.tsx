@@ -33,8 +33,9 @@ export function CSVImportDialog({ goalId, open, onOpenChange, onSuccess }: CSVIm
 
     try {
       setIsLoading(true);
-      const buffer = await selectedFile.arrayBuffer();
-      const result = await validateCSVAction(Buffer.from(buffer));
+      const formData: any = new FormData();
+      formData.append("file", selectedFile);
+      const result = await validateCSVAction(formData);
 
       if (result.success) {
         setPreview(result.data?.rows || []);
@@ -57,9 +58,11 @@ export function CSVImportDialog({ goalId, open, onOpenChange, onSuccess }: CSVIm
     try {
       setIsLoading(true);
       setStep('importing');
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("goalId", goalId);
 
-      const buffer = await file.arrayBuffer();
-      const result = await importPlansFromCSVAction(goalId, Buffer.from(buffer));
+      const result = await importPlansFromCSVAction(formData);
 
       if (result.success) {
         toast.success(`Imported ${result.data?.imported} plans successfully`);
@@ -121,7 +124,7 @@ export function CSVImportDialog({ goalId, open, onOpenChange, onSuccess }: CSVIm
             <div className="rounded-lg bg-muted p-4 text-sm">
               <p className="font-semibold mb-2">CSV Format Example:</p>
               <pre className="text-xs overflow-x-auto">
-{`day_number,title,description,estimated_minutes,is_optional
+                {`day_number,title,description,estimated_minutes,is_optional
 1,Lesson 1,Learn basics,30,false
 2,Lesson 2,Practice exercises,45,false
 3,Quiz 1,Review and test,60,true`}

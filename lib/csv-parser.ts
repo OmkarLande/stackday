@@ -9,6 +9,14 @@ export interface PlanCSVRow {
 }
 
 export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
+  const parseBoolean = (val: any): boolean => {
+    if (val === undefined || val === null) return false;
+
+    const normalized = String(val).toLowerCase().trim();
+
+    return ["true", "TRUE", "1", "yes", "YES"].includes(normalized);
+  };
+
   return new Promise((resolve, reject) => {
     Papa.parse(input, {
       header: true,
@@ -17,7 +25,7 @@ export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
         try {
           const rows = results.data as any[];
           const parsed: PlanCSVRow[] = rows
-            .filter((row) => row.day_number || row.title)
+            .filter((row) => Object.keys(row).length > 0)
             .map((row, index) => {
               const dayNumber = parseInt(
                 row.day_number ||
@@ -61,11 +69,9 @@ export async function parseCSV(input: string | File): Promise<PlanCSVRow[]> {
                           row["Minutes"],
                       )
                     : undefined,
-                is_optional:
-                  row.is_optional === "true" ||
-                  row.is_optional === "1" ||
-                  row["Optional"] === "1" ||
-                  row["Is Optional"] === "true",
+                is_optional: parseBoolean(
+                  row.is_optional ?? row["Optional"] ?? row["Is Optional"],
+                ),
               };
             });
 
