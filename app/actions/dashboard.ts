@@ -2,6 +2,7 @@
 
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getStreakData } from "@/lib/streak";
 
 export async function getDashboardDataAction() {
   try {
@@ -16,9 +17,7 @@ export async function getDashboardDataAction() {
       orderBy: { task_date: "asc" },
     });
 
-    const streakRecord = await prisma.streakRecord.findUnique({
-      where: { user_id: session.userId },
-    });
+    const streakRecord = await getStreakData(session.userId);
 
     return { success: true, data: { dailyTasks, streakRecord } };
   } catch (error) {
