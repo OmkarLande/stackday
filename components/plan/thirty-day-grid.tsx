@@ -64,7 +64,7 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
           <Card
             key={day}
             className={cn(
-              "group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border/50",
+              "group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border/50 dark:border-white/25",
               plan ? "bg-card" : "bg-muted/30 border-dashed opacity-60",
               isCompleted && "bg-green-500/5 border-green-500/30 dark:bg-green-500/[0.02] dark:border-green-500/20"
             )}
@@ -80,15 +80,15 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                 <div className="flex items-center justify-between">
                   <div className={cn(
                     "px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase",
-                    plan 
-                      ? isCompleted 
+                    plan
+                      ? isCompleted
                         ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                         : "bg-primary/10 text-primary dark:bg-primary/20"
                       : "bg-muted text-muted-foreground"
                   )}>
                     Day {day}
                   </div>
-                  
+
                   {plan && (
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <Button
@@ -117,8 +117,8 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                     <div className="flex items-start gap-2">
                       <div className={cn(
                         "mt-0.5 p-1 rounded-md shrink-0",
-                        plan.is_optional 
-                          ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400" 
+                        plan.is_optional
+                          ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
                           : "bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
                       )}>
                         {plan.is_optional ? <Zap className="h-3 w-3" /> : <Flame className="h-3 w-3" />}
@@ -146,8 +146,8 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                       )}
                       <div className={cn(
                         "text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter",
-                        plan.is_optional 
-                          ? "text-amber-600/70 border border-amber-200 dark:border-amber-900/50" 
+                        plan.is_optional
+                          ? "text-amber-600/70 border border-amber-200 dark:border-amber-900/50"
                           : "text-orange-600/70 border border-orange-200 dark:border-orange-900/50"
                       )}>
                         {plan.is_optional ? 'Bonus' : 'Critical'}

@@ -81,7 +81,11 @@ export async function getOrCreateTodayTask() {
     }
 
     if (!primaryPlan) {
-      return { success: false, error: "No primary tasks found. All remaining plans might be marked as optional!" };
+      return {
+        success: false,
+        error:
+          "No primary tasks found. All remaining plans might be marked as optional!",
+      };
     }
 
     // 3. Determine Secondary Task (Optional)
@@ -131,7 +135,7 @@ export async function getOrCreateTodayTask() {
           task_type: TaskType.PRIMARY,
           is_optional: primaryPlan!.is_optional,
           ai_reason: `Focus on your main goal: "${primaryPlan!.goal.title}"`,
-          ai_steps: `1. Carry forward from yesterday if skipped\n2. Work for ${primaryPlan!.estimated_minutes || 45} mins\n3. Mark complete to maintain your streak`,
+          ai_steps: `Carry forward from yesterday if skipped\n Work for ${primaryPlan!.estimated_minutes || 45} mins\n Mark complete to maintain your streak\n Use Timer if needed`,
         },
         include: { plan: { include: { goal: true } } },
       });
@@ -149,7 +153,7 @@ export async function getOrCreateTodayTask() {
             task_type: TaskType.SECONDARY,
             is_optional: secondaryPlan.is_optional,
             ai_reason: `Quick win for "${secondaryPlan.goal.title}"`,
-            ai_steps: `1. Bonus task\n2. Keep it under ${secondaryPlan.estimated_minutes || 20} mins\n3. Boost your productivity`,
+            ai_steps: `Bonus task\n Keep it under ${secondaryPlan.estimated_minutes || 20} mins\n Boost your productivity\n Use Timer and maintain StreakW`,
           },
           include: { plan: { include: { goal: true } } },
         });
@@ -164,7 +168,8 @@ export async function getOrCreateTodayTask() {
     console.error("Error generating tasks:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to generate tasks",
+      error:
+        error instanceof Error ? error.message : "Failed to generate tasks",
     };
   }
 }
