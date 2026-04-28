@@ -132,7 +132,7 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                     </div>
 
                     {/* Description */}
-                    <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">
+                    <p className="text-xs text-muted-foreground line-clamp-2 min-h-20">
                       {plan.description}
                     </p>
 
@@ -215,7 +215,7 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-6 space-y-2 opacity-50">
+                  <div className="flex flex-col items-center justify-center py-2 space-y-2 opacity-50">
                     <div className="h-8 w-8 rounded-full border border-dashed border-muted-foreground flex items-center justify-center">
                       <Clock className="h-4 w-4 text-muted-foreground" />
                     </div>
