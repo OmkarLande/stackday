@@ -5,14 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { TaskStatus } from "@/lib/Enums/TaskStatus";
 import { TaskType } from "@/lib/Enums/TaskType";
 
-export async function getOrCreateTodayTask() {
+export async function getOrCreateTodayTask(userId: string) {
   try {
-    const session = await getSession();
-    if (!session) {
-      return { success: false, error: "Not authenticated" };
-    }
-
-    const userId = session.userId;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -47,7 +41,7 @@ export async function getOrCreateTodayTask() {
       },
     });
 
-    if (yesterdayPrimary && yesterdayPrimary.status === TaskStatus.SKIPPED) {
+    if (yesterdayPrimary && yesterdayPrimary.status !== TaskStatus.COMPLETED) {
       // CARRY FORWARD: Reuse yesterday's skipped plan
       primaryPlan = await prisma.plan.findUnique({
         where: { id: yesterdayPrimary.plan_id },
@@ -66,7 +60,13 @@ export async function getOrCreateTodayTask() {
         const nextPlan = await prisma.plan.findFirst({
           where: {
             goal_id: goal.id,
-            daily_tasks: { none: {} },
+            NOT: {
+              daily_tasks: {
+                some: {
+                  status: TaskStatus.COMPLETED,
+                },
+              },
+            },
             is_optional: false, // Primary must be a "Main Task"
           },
           orderBy: { day_number: "asc" },
@@ -104,7 +104,13 @@ export async function getOrCreateTodayTask() {
       const nextPlan = await prisma.plan.findFirst({
         where: {
           goal_id: goal.id,
-          daily_tasks: { none: {} },
+          NOT: {
+            daily_tasks: {
+              some: {
+                status: TaskStatus.COMPLETED,
+              },
+            },
+          },
         },
         orderBy: [
           { is_optional: "desc" }, // Prefer optional plans for bonus slot

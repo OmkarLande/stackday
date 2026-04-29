@@ -14,7 +14,7 @@ export async function getOrCreateTodayTaskAction() {
       return { success: false, error: "Not authenticated" };
     }
 
-    const result = await getOrCreateTodayTask();
+    const result = await getOrCreateTodayTask(session.userId);
     if (result.success) {
       return { success: true, data: result.data };
     }
@@ -68,7 +68,8 @@ export async function updateDailyTaskStatusAction(
 
     if (
       status === TaskStatus.COMPLETED &&
-      task.task_type === TaskType.PRIMARY
+      task.task_type === TaskType.PRIMARY &&
+      task.status !== TaskStatus.COMPLETED
     ) {
       await updateStreakOnCompletion(session.userId);
     }
@@ -165,6 +166,14 @@ export async function manualTaskAction(
       data: { status },
       include: { plan: { include: { goal: true } } },
     });
+
+    if (
+      status === TaskStatus.COMPLETED &&
+      task.task_type === TaskType.PRIMARY &&
+      task.status !== TaskStatus.COMPLETED
+    ) {
+      await updateStreakOnCompletion(session.userId);
+    }
 
     return { success: true, data: updated };
   } catch (error) {
