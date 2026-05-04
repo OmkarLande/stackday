@@ -4,7 +4,6 @@ import { Check, Trash2, Pencil, RotateCcw, CheckCircle2, Clock, Zap, Flame } fro
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { deletePlanAction } from '@/app/actions/plans';
 import { manualTaskAction } from '@/app/actions/tasks';
 import { TaskStatus } from '@/lib/Enums/TaskStatus';
 import { useState } from 'react';
@@ -19,22 +18,6 @@ export interface ThirtyDayGridProps {
 
 export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
   const [editingPlan, setEditingPlan] = useState<any>(null);
-
-  const handleDelete = async (planId: string) => {
-    if (!confirm('Are you sure you want to delete this plan?')) return;
-
-    try {
-      const result = await deletePlanAction(planId);
-      if (result.success) {
-        toast.success('Plan deleted');
-        onPlansUpdate();
-      } else {
-        toast.error(result.error || 'Failed to delete plan');
-      }
-    } catch (error) {
-      toast.error('An error occurred');
-    }
-  };
 
   const handleManualAction = async (taskId: string, status: TaskStatus) => {
     try {
@@ -54,18 +37,18 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {days.map(day => {
         const plan = plansMap.get(day);
         const isCompleted = plan?.daily_tasks?.some((t: any) => t.status === TaskStatus.COMPLETED);
-        const isSkipped = plan?.daily_tasks?.some((t: any) => t.status === TaskStatus.SKIPPED);
 
         return (
           <Card
             key={day}
+            onClick={() => plan ? setEditingPlan(plan) : null}
             className={cn(
               "group relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-border/50 dark:border-white/25",
-              plan ? "bg-card" : "bg-muted/30 border-dashed opacity-60",
+              plan ? "bg-card cursor-pointer" : "bg-muted/30 border-dashed opacity-60",
               isCompleted && "bg-green-500/5 border-green-500/30 dark:bg-green-500/[0.02] dark:border-green-500/20"
             )}
           >
@@ -74,8 +57,8 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
               <div className="absolute -right-4 -top-4 h-16 w-16 bg-green-500/10 blur-2xl transition-all group-hover:bg-green-500/20" />
             )}
 
-            <CardContent className="p-4 relative">
-              <div className="space-y-3">
+            <CardContent className="p-3 sm:p-4 relative">
+              <div className="space-y-2 sm:space-y-3">
                 {/* Header */}
                 <div className="flex items-center justify-between">
                   <div className={cn(
@@ -88,31 +71,10 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                   )}>
                     Day {day}
                   </div>
-
-                  {plan && (
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                        onClick={() => setEditingPlan(plan)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(plan.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  )}
                 </div>
 
                 {plan ? (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {/* Title & Type Icon */}
                     <div className="flex items-start gap-2">
                       <div className={cn(
@@ -132,7 +94,7 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                     </div>
 
                     {/* Description */}
-                    <p className="text-xs text-muted-foreground line-clamp-2 min-h-20">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground line-clamp-2 min-h-[3rem] sm:min-h-20">
                       {plan.description}
                     </p>
 
@@ -156,7 +118,7 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
 
                     {/* Task Execution Status */}
                     {plan.daily_tasks && plan.daily_tasks.length > 0 && (
-                      <div className="pt-3 border-t border-border/50 space-y-2">
+                      <div className="pt-3 border-t border-border/50 space-y-2" onClick={(e) => e.stopPropagation()}>
                         {(() => {
                           const latestTask = [...plan.daily_tasks].sort((a, b) =>
                             new Date(b.task_date).getTime() - new Date(a.task_date).getTime()
@@ -181,12 +143,12 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                                 )}
                               </div>
 
-                              <div className="flex gap-1.5 pt-1">
+                              <div className="flex flex-col sm:flex-row gap-1 sm:gap-1.5 pt-1">
                                 {latestTask.status === TaskStatus.SKIPPED && (
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 text-[10px] flex-1 font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
+                                    className="h-8 sm:h-7 text-[10px] sm:text-[10px] flex-1 font-semibold hover:bg-primary hover:text-primary-foreground transition-colors"
                                     onClick={() => handleManualAction(latestTask.id, TaskStatus.PENDING)}
                                   >
                                     <RotateCcw className="h-3 w-3 mr-1" />
@@ -198,13 +160,13 @@ export function ThirtyDayGrid({ plans, onPlansUpdate }: ThirtyDayGridProps) {
                                     variant={latestTask.status === TaskStatus.PENDING ? "default" : "outline"}
                                     size="sm"
                                     className={cn(
-                                      "h-7 text-[10px] flex-1 font-bold transition-all",
+                                      "h-8 sm:h-7 text-[10px] sm:text-[10px] flex-1 font-bold transition-all",
                                       latestTask.status === TaskStatus.PENDING && "bg-green-600 hover:bg-green-700 text-white dark:bg-green-500 dark:hover:bg-green-600 border-none shadow-sm shadow-green-500/20"
                                     )}
                                     onClick={() => handleManualAction(latestTask.id, TaskStatus.COMPLETED)}
                                   >
                                     <Check className="h-3.5 w-3.5 mr-1" />
-                                    Complete
+                                    Done
                                   </Button>
                                 )}
                               </div>

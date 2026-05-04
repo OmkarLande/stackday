@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,9 +12,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 import { logoutAction } from '@/app/actions/auth';
-import { User, Moon, Sun, LayoutDashboard, Target, Calendar, Timer, BookOpen } from 'lucide-react';
+import { User, Moon, Sun, LayoutDashboard, Target, Calendar, Timer, BookOpen, Menu } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +28,7 @@ export function Header({ userName = 'User', email = '' }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     const result = await logoutAction();
@@ -48,12 +51,55 @@ export function Header({ userName = 'User', email = '' }: HeaderProps) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 h-16">
-        <Link href="/" className="flex items-center gap-2 group">
-          <div className="bg-green-600 dark:bg-green-500 p-1.5 rounded-lg shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform duration-300">
-            <Target className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-xl font-black tracking-tighter">Stackday</h1>
-        </Link>
+        <div className="flex items-center gap-2">
+          {/* Mobile Menu */}
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden mr-2">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+              <SheetHeader className="pb-6">
+                <SheetTitle className="text-left flex items-center gap-2">
+                  <div className="bg-green-600 dark:bg-green-500 p-1.5 rounded-lg shadow-lg shadow-green-500/20">
+                    <Target className="h-5 w-5 text-white" />
+                  </div>
+                  <span className="text-xl font-black tracking-tighter">Stackday</span>
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-2">
+                {navItems.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 px-4 py-3 rounded-xl text-base font-bold transition-all duration-200",
+                        isActive
+                          ? "bg-green-500/10 text-green-600 dark:text-green-500"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      )}
+                    >
+                      <item.icon className={cn("h-5 w-5", isActive ? "animate-pulse" : "")} />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </SheetContent>
+          </Sheet>
+
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="bg-green-600 dark:bg-green-500 p-1.5 rounded-lg shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform duration-300 hidden md:block">
+              <Target className="h-5 w-5 text-white" />
+            </div>
+            <h1 className="text-xl font-black tracking-tighter">Stackday</h1>
+          </Link>
+        </div>
 
         <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => {
