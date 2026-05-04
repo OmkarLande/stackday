@@ -67,9 +67,8 @@ export async function getOrCreateTodayTask(userId: string) {
                 },
               },
             },
-            is_optional: false, // Primary must be a "Main Task"
           },
-          orderBy: { day_number: "asc" },
+          orderBy: [{ day_number: "asc" }],
           include: { goal: true },
         });
 
@@ -113,9 +112,9 @@ export async function getOrCreateTodayTask(userId: string) {
           },
         },
         orderBy: [
-          { is_optional: "desc" }, // Prefer optional plans for bonus slot
-          { estimated_minutes: "asc" },
           { day_number: "asc" },
+          { is_optional: "desc" },
+          { estimated_minutes: "asc" },
         ],
         include: { goal: true },
       });
