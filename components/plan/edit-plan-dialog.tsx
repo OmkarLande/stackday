@@ -147,6 +147,9 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
               <DialogTitle className="text-xl sm:text-2xl font-black tracking-tight mt-1 sm:mt-2">
                 {isEditMode ? 'Edit Your Plan' : 'Plan Details'}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                {isEditMode ? 'Modify your plan details and save changes.' : 'View details of your 30-day plan day.'}
+              </DialogDescription>
             </div>
 
             <div className="flex items-center gap-1">

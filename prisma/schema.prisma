@@ -18,7 +18,9 @@ model User {
   password_hash String
   name          String
   created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  updated_at            DateTime @updatedAt
+  isnotificationenabled Boolean  @default(false)
+  isReportingEnabled    Boolean  @default(false)
 
   goals         Goal[]
   plans         Plan[]
