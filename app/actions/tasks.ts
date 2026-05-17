@@ -181,3 +181,47 @@ export async function manualTaskAction(
     return { success: false, error: "Failed to update task" };
   }
 }
+
+export async function completePlanDirectlyAction(planId: string) {
+  try {
+    const session = await getSession();
+    if (!session) return { success: false, error: "Not authenticated" };
+
+    const plan = await prisma.plan.findUnique({
+      where: { id: planId },
+    });
+
+    if (!plan || plan.user_id !== session.userId) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const existingTask = await prisma.dailyTask.findFirst({
+      where: { plan_id: planId },
+      orderBy: { created_at: 'desc' }
+    });
+
+    if (existingTask) {
+      const updated = await prisma.dailyTask.update({
+        where: { id: existingTask.id },
+        data: { status: TaskStatus.COMPLETED },
+      });
+      return { success: true, data: updated };
+    } else {
+      const newTask = await prisma.dailyTask.create({
+        data: {
+          user_id: session.userId,
+          plan_id: plan.id,
+          goal_id: plan.goal_id,
+          task_date: new Date(),
+          status: TaskStatus.COMPLETED,
+          task_type: TaskType.PRIMARY,
+          is_optional: plan.is_optional,
+        },
+      });
+      return { success: true, data: newTask };
+    }
+  } catch (error) {
+    console.error("Failed to complete plan directly:", error);
+    return { success: false, error: "Failed to complete plan" };
+  }
+}

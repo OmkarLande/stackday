@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { updatePlanAction, deletePlanAction } from '@/app/actions/plans';
-import { manualTaskAction } from '@/app/actions/tasks';
+import { manualTaskAction, completePlanDirectlyAction } from '@/app/actions/tasks';
 import { TaskStatus } from '@/lib/Enums/TaskStatus';
 import { CheckCircle2, Clock, Zap, Flame, AlignLeft, Check, Pencil, Trash2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -105,15 +105,9 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
   };
 
   const handleMarkAsComplete = async () => {
-    if (!plan?.daily_tasks?.[0]) return;
-
     setIsLoading(true);
     try {
-      const latestTask = [...plan.daily_tasks].sort((a, b) =>
-        new Date(b.task_date).getTime() - new Date(a.task_date).getTime()
-      )[0];
-
-      const result = await manualTaskAction(latestTask.id, TaskStatus.COMPLETED);
+      const result = await completePlanDirectlyAction(plan.id);
       if (result.success) {
         toast.success('Task marked as completed');
         onSuccess();
@@ -161,14 +155,27 @@ export function EditPlanDialog({ plan, open, onOpenChange, onSuccess }: EditPlan
               )}
 
               {!isEditMode ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsEditMode(true)}
-                  className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors text-muted-foreground h-9 w-9"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setIsEditMode(true)}
+                    className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors text-muted-foreground h-9 w-9"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  {!isCompleted && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleMarkAsComplete}
+                      disabled={isLoading}
+                      className="rounded-full hover:bg-green-500/10 text-green-600 dark:text-green-400 transition-colors h-9 w-9"
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
               ) : (
                 <>
                   <Button

@@ -68,11 +68,7 @@ export async function getPlansByGoalAction(goalId: string) {
     const plans = await prisma.plan.findMany({
       where: { goal_id: goalId },
       include: {
-        daily_tasks: {
-          where: {
-            status: 'completed',
-          },
-        },
+        daily_tasks: true,
       },
       orderBy: { day_number: 'asc' },
     });
